@@ -27,7 +27,7 @@ class MessageHandler(Message):
         options = self.process_rules(message)
 
         print('matched', options)
-        self.send_to_slack(decode_base64_if_required(message.get_payload()), **options)
+        self.send_to_slack(self.decode_base64_if_required(message.get_payload()), **options)
 
         if options['debug']:
             self.send_to_slack('DEBUG: ' + str(message), **options)
@@ -46,7 +46,6 @@ class MessageHandler(Message):
             return base64.b64decode(input).decode('utf-8')
             
         return input
-
 
     def process_rules(self, message):
         """ Check every rule from config and returns options from matched
