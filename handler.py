@@ -1,6 +1,7 @@
 import os
 import re
 import yaml
+import base64
 import slack
 import slack.chat
 from aiosmtpd.handlers import Message
@@ -26,17 +27,31 @@ class MessageHandler(Message):
         options = self.process_rules(message)
 
         print('matched', options)
-        self.send_to_slack(message.get_payload(), **options)
+        self.send_to_slack(decode_base64_if_required(message.get_payload()), **options)
 
         if options['debug']:
             self.send_to_slack('DEBUG: ' + str(message), **options)
+            
+    def isBase64(s):
+        pattern = re.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$")
+        if pattern.match(s):
+            return True
+        return False
+            
+    def decode_base64_if_required(self, input):
+        """ Check if email follows SMTP/MIME base64 standard, and if so
+            decode into string text
+        """
+        if MessageHandler.isBase64(input):
+            return base64.b64decode(input).decode('utf-8')
+            
+        return input
 
 
     def process_rules(self, message):
         """ Check every rule from config and returns options from matched
         """
         default = self.config['default']
-
         fields = {
             'from': message['From'],
             'to': message['To'],
