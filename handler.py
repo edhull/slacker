@@ -34,7 +34,7 @@ class MessageHandler(Message):
             
     def isBase64(s):
         pattern = re.compile("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$")
-        if pattern.match(s):
+        if pattern.match(str(s).strip()):
             return True
         return False
             
