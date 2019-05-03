@@ -73,3 +73,13 @@ rules:
           icon_url: ''
           debug: true    # will output full email with all X-headers
 ```
+## Test Results for b64
+
+```
+$ py test_handler.py
+Test1: False
+Test2: b'test'
+Test3: b'Trigger: NextCloud not responding\r\nTrigger status: OK\r\nTrigger severity: Disaster\r\nTrigger URL: \r\n\r\nItem values:\r\n\r\n1. NextCloud Running (NAS-DAT
+:net.tcp.service[tcp,,80]): 1\r\n2. *UNKNOWN* (*UNKNOWN*:*UNKNOWN*): *UNKNOWN*\r\n3. *UNKNOWN* (*UNKNOWN*:*UNKNOWN*): *UNKNOWN*\r\n\r\nOriginal event ID: 34137'
+
+```
