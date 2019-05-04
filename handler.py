@@ -38,10 +38,10 @@ class MessageHandler(Message):
             decode into string text
         """
         try:
-            decoded = base64.b64decode(input).decode('utf-8')
+            decoded = base64.b64decode(str(input).decode('utf-8')
             return decoded
         except binascii.Error:
-            return input
+            return str(input)
             
 
     def process_rules(self, message):
