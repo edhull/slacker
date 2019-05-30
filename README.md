@@ -10,23 +10,11 @@ notifications.
 
 ## Installation
 
-Slacker can be easily installed via docker:
+Slacker can be easily built and run via docker:
 
 ```bash
-docker pull ontrif/slacker
+docker build .
 ```
-
-Then run container with custom slacker `config.yml`:
-
-```bash
-docker run \
-    -d --restart=always \
-    --name=slacker \
-    -v /path/to/config.yml:/etc/slacker/config.yml \
-    -p localhost:8025:8025 \
-    ontrif/slacker
-```
-Last command will start SMTP server on `localhost:8025`
 
 ## Config
 
@@ -72,14 +60,4 @@ rules:
           channel: '#cron'
           icon_url: ''
           debug: true    # will output full email with all X-headers
-```
-## Test Results for b64
-
-```
-$ py test_handler.py
-Test1: False
-Test2: b'test'
-Test3: b'Trigger: NextCloud not responding\r\nTrigger status: OK\r\nTrigger severity: Disaster\r\nTrigger URL: \r\n\r\nItem values:\r\n\r\n1. NextCloud Running (NAS-DAT
-:net.tcp.service[tcp,,80]): 1\r\n2. *UNKNOWN* (*UNKNOWN*:*UNKNOWN*): *UNKNOWN*\r\n3. *UNKNOWN* (*UNKNOWN*:*UNKNOWN*): *UNKNOWN*\r\n\r\nOriginal event ID: 34137'
-
 ```
