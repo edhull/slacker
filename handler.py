@@ -42,6 +42,8 @@ class MessageHandler(Message):
             return decoded
         except binascii.Error:
             return str(input)
+        except UnicodeDecodeError:
+            return str(input)
             
 
     def process_rules(self, message):
