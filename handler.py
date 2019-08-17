@@ -44,6 +44,10 @@ class MessageHandler(Message):
             return str(input)
         except UnicodeDecodeError:
             return str(input)
+        except UnicodeEncodeError:
+            return str(input)
+        except ValueError:
+            return str(input)
             
 
     def process_rules(self, message):
