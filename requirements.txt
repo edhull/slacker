@@ -4,3 +4,4 @@ pyslack==0.4.0
 PyYAML==3.12
 requests==2.11.1
 pytest==4.4.1
+html2text

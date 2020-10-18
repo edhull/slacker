@@ -5,8 +5,12 @@ import base64
 import binascii
 import slack
 import slack.chat
+import html2text
+import email
+import requests
 from aiosmtpd.handlers import Message
-
+from hashlib import sha256
+from base64 import b64encode, b64decode
 
 class MessageHandler(Message):
     def __init__(self, *args, **kargs):
@@ -20,35 +24,44 @@ class MessageHandler(Message):
 
         self.config = yaml.load(open(config))
 
+    def email2text(data):
+        body = email.message_from_bytes(data).get_payload()
+        h = html2text.HTML2Text()
+        h.ignore_tables = True
+        return re.sub(r'\n\s*\n', '\n\n', h.handle(body))
 
     def handle_message(self, message):
         """ This method will be called by aiosmtpd server when new mail will
-            arrived.
+            arrive.
         """
         options = self.process_rules(message)
-
         print('matched', options)
-        self.send_to_slack(MessageHandler.decode_base64_if_required(message.get_payload()), **options)
 
+        parsedMessage = email.message_from_string(message.as_string())
+        
+        body = ""
+
+        if parsedMessage.is_multipart():
+            for part in parsedMessage.walk():
+                ctype = part.get_content_type()
+                cdispo = str(part.get('Content-Disposition'))
+
+                # skip any text/plain (txt) attachments
+                if ctype == 'text/plain' and 'attachment' not in cdispo:
+                    body = part.get_payload(decode=True)  # decode
+                    break
+                if ctype == 'text/html' and 'attachment' not in cdispo:
+                    body = MessageHandler.email2text(part.get_payload(decode=True))  # decode
+                    break
+        # not multipart - i.e. plain text, no attachments, keeping fingers crossed
+        else:
+            body = parsedMessage.get_payload(decode=True)
+        
         if options['debug']:
-            self.send_to_slack('DEBUG: ' + str(message), **options)
-              
-    def decode_base64_if_required(input):
-        """ Check if email follows SMTP/MIME base64 standard, and if so
-            decode into string text
-        """
-        try:
-            decoded = base64.b64decode(str(input)).decode('utf-8')
-            return decoded
-        except binascii.Error:
-            return str(input)
-        except UnicodeDecodeError:
-            return str(input)
-        except UnicodeEncodeError:
-            return str(input)
-        except ValueError:
-            return str(input)
-            
+            print(body)
+            self.send_to_slack('DEBUG: ' + str(body), **options)
+
+        self.send_to_slack(body, **options)
 
     def process_rules(self, message):
         """ Check every rule from config and returns options from matched
