@@ -28,6 +28,8 @@ class MessageHandler(Message):
         body = email.message_from_bytes(data).get_payload()
         h = html2text.HTML2Text()
         h.ignore_tables = True
+        h.ignore_links = True
+        h.ignore_images = True
         return re.sub(r'\n\s*\n', '\n\n', h.handle(body))
 
     def handle_message(self, message):
@@ -42,25 +44,47 @@ class MessageHandler(Message):
         body = ""
 
         if parsedMessage.is_multipart():
+            if options['debug']:
+                    print("Message is a multipart")
             for part in parsedMessage.walk():
                 ctype = part.get_content_type()
                 cdispo = str(part.get('Content-Disposition'))
+                if options['debug']:
+                    print("Content type is: " + ctype)
 
                 # skip any text/plain (txt) attachments
-                if ctype == 'text/plain' and 'attachment' not in cdispo:
+                if ctype.startswith('text/plain') and 'attachment' not in cdispo:
+                    if options['debug']:
+                        print("Matched content type text/plain")
                     body = part.get_payload(decode=True)  # decode
                     break
-                if ctype == 'text/html' and 'attachment' not in cdispo:
+                if ctype.startswith('text/html') and 'attachment' not in cdispo:
+                    if options['debug']:
+                        print("Matched content type text/html")
                     body = MessageHandler.email2text(part.get_payload(decode=True))  # decode
                     break
         # not multipart - i.e. plain text, no attachments, keeping fingers crossed
         else:
-            body = parsedMessage.get_payload(decode=True)
+            ctype = message.get_content_type()
+            cdispo = str(message.get('Content-Disposition'))
+            if ctype.startswith('text/plain') and 'attachment' not in cdispo:
+                if options['debug']:
+                    print("Matched non-multipart content type text/plain")
+                body = message.get_payload(decode=True)  # decode
+            elif ctype.startswith('text/html') and 'attachment' not in cdispo:
+                if options['debug']:
+                    print("Matched non-multipart content type text/html")
+                body = MessageHandler.email2text(message.get_payload(decode=True))  # decode
+            else:
+                if options['debug']:
+                    print("Did not match a non-multipart content type")
+                body = parsedMessage.get_payload(decode=True)
         
         if options['debug']:
-            print(body)
-            self.send_to_slack('DEBUG: ' + str(body), **options)
-
+            #print(body)
+            #self.send_to_slack('DEBUG: ' + str(body), **options)
+            self.send_to_slack('DEBUG: ' + str(parsedMessage), **options)
+        
         self.send_to_slack(body, **options)
 
     def process_rules(self, message):
