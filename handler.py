@@ -22,7 +22,7 @@ class MessageHandler(Message):
             print('Config doesn\'t exists!')
             exit(1)
 
-        self.config = yaml.load(open(config))
+        self.config = yaml.safe_load(open(config))
 
     def email2text(data):
         body = email.message_from_bytes(data).get_payload()
