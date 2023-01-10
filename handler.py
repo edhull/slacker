@@ -79,13 +79,17 @@ class MessageHandler(Message):
                 if options['debug']:
                     print("Did not match a non-multipart content type")
                 body = parsedMessage.get_payload(decode=True)
-        
+
         if options['debug']:
             #print(body)
             #self.send_to_slack('DEBUG: ' + str(body), **options)
             self.send_to_slack('DEBUG: ' + str(parsedMessage), **options)
-        
-        self.send_to_slack(body, **options)
+        else:
+            try:
+                self.send_to_slack(body, **options)
+            except slack.exception.SlackError:
+                # Send whole object only if Slack throws error
+                self.send_to_slack(str(parsedMessage), **options)
 
     def process_rules(self, message):
         """ Check every rule from config and returns options from matched
@@ -101,7 +105,7 @@ class MessageHandler(Message):
         print(fields)
 
         for rule in self.config['rules']:
-            tests = (re.match(rule[field], value) for field, value in fields.items() if field in rule)
+            tests = (re.match(rule[field], str(value)) for field, value in fields.items() if field in rule)
 
             if all(tests):
                 options = default.copy()
