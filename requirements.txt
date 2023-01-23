@@ -1,4 +1,4 @@
-aiosmtpd==1.4.3
+aiosmtpd==1.4.4.post2
 atpublic==1.0
 pyslack==0.5.0
 PyYAML==6.0
