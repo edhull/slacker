@@ -65,20 +65,37 @@ class MessageHandler(Message):
                     break
         # not multipart - i.e. plain text, no attachments, keeping fingers crossed
         else:
-            ctype = message.get_content_type()
-            cdispo = str(message.get('Content-Disposition'))
-            if ctype.startswith('text/plain') and 'attachment' not in cdispo:
+            ctype = parsedMessage.get_content_type()
+            cdispo = str(parsedMessage.get('Content-Disposition') or "")
+
+            if ctype.startswith('text/plain') and 'attachment' not in cdispo.lower():
                 if options['debug']:
                     print("Matched non-multipart content type text/plain")
-                body = message.get_payload(decode=True)  # decode
-            elif ctype.startswith('text/html') and 'attachment' not in cdispo:
+
+                raw = parsedMessage.get_payload(decode=True) 
+                if raw is None:
+                    body = parsedMessage.get_payload()
+                else:
+                    charset = parsedMessage.get_content_charset() or "utf-8"
+                    body = raw.decode(charset, errors="replace")
+
+            elif ctype.startswith('text/html') and 'attachment' not in cdispo.lower():
                 if options['debug']:
                     print("Matched non-multipart content type text/html")
-                body = MessageHandler.email2text(message.get_payload(decode=True))  # decode
+
+                raw = parsedMessage.get_payload(decode=True)
+                if raw is None:
+                    html = parsedMessage.get_payload()
+                else:
+                    charset = parsedMessage.get_content_charset() or "utf-8"
+                    html = raw.decode(charset, errors="replace")
+
+                body = MessageHandler.email2text(html.encode("utf-8") if isinstance(html, str) else html)
+
             else:
                 if options['debug']:
                     print("Did not match a non-multipart content type")
-                body = parsedMessage.get_payload(decode=True)
+                body = parsedMessage.get_payload(decode=True) or parsedMessage.as_string()
 
         if options['debug']:
             #print(body)
